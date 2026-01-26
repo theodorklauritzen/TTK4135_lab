@@ -7,6 +7,7 @@
 clear all;
 close all;
 clc;
+addpath('template_problem_2')
 
 % The encoder for travel for Helicopter 2 is different from the rest.
 travel_gain = 1; %
