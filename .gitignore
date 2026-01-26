@@ -1,0 +1,30 @@
+# MATLAB cache and temp
+*.asv
+*.m~
+*.p
+*.mex*
+*.mat
+*.slxc
+*.slprj/
+*.autosave
+
+
+# Simulink code generation artifacts
+slprj/
+model.slxc
+model.slxc/
+*.r2018a
+*_ert_rtw/
+
+
+# Simulink shared artifacts
+work/
+cache/
+codegen/
+
+# All dotfiles
+._*
+
+# OS junk
+.DS_store
+Thumbs.db
