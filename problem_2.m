@@ -59,7 +59,7 @@ Q1(1,1) = 1;                            % Weight on state x1
 Q1(2,2) = 0;                            % Weight on state x2
 Q1(3,3) = 0;                            % Weight on state x3
 Q1(4,4) = 0;                            % Weight on state x4
-P1 = 1.2;                                % Weight on input
+P1 = 12;                                % Weight on input
 Q = gen_q(Q1,P1,N,M);                                  % Generate Q, hint: gen_q
 c = zeros(size(Q, 1), 1);                                  % Generate c, this is the linear constant term in the QP
 
@@ -117,3 +117,6 @@ ylabel('p')
 subplot(515)
 plot(t,x4,'m',t,x4','mo'),grid
 xlabel('tid (s)'),ylabel('pdot')
+
+fig = gcf;
+fig.Position = [500, 300, 1000, 700];
