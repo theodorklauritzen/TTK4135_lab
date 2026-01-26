@@ -28,3 +28,7 @@ codegen/
 # OS junk
 .DS_store
 Thumbs.db
+
+# Quarc
+*_quarc_win64/
+*.rt-win64
