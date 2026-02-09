@@ -59,7 +59,7 @@ Q1(1,1) = 1;                            % Weight on state x1
 Q1(2,2) = 0;                            % Weight on state x2
 Q1(3,3) = 0;                            % Weight on state x3
 Q1(4,4) = 0;                            % Weight on state x4
-P1 = 12;                                % Weight on input
+P1 = 1;                                % Weight on input
 Q = gen_q(Q1,P1,N,M);                                  % Generate Q, hint: gen_q
 c = zeros(size(Q, 1), 1);                                  % Generate c, this is the linear constant term in the QP
 
@@ -99,7 +99,8 @@ x3  = [zero_padding; x3; zero_padding];
 x4  = [zero_padding; x4; zero_padding];
 
 %% Plotting
-t = 0:delta_t:delta_t*(length(u)-1);
+simulation_time = delta_t*(length(u)-1);
+t = 0:delta_t:simulation_time;
 
 figure(2)
 subplot(511)

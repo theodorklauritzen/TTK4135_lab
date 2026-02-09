@@ -3,7 +3,7 @@
 *.m~
 *.p
 *.mex*
-*.mat
+#*.mat
 *.slxc
 *.slprj/
 *.autosave
