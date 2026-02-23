@@ -5,7 +5,7 @@
 %% Initialization and model definition
 init; % Change this to the init file corresponding to your helicopter
 
-% Discrete time system model. x = [lambda r p p_dot]'
+% Discrete time system model. x = [lambda r p p_dot e e_dot]' 
 delta_t	= 0.25; % sampling time
 A2 = [
     1, delta_t, 0, 0, 0, 0;
@@ -60,8 +60,23 @@ xu(5)   = uu(2);
 
 % Generate constraints on measurements and inputs
 [vlb,vub]       = gen_constraints(N,M,xl,xu,ul,uu); % hint: gen_constraints
+vlb(N*mx+M*mu - 1)  = 0;                % We want the last input to be zero
+vub(N*mx+M*mu - 1)  = 0;                % We want the last input to be zero
 vlb(N*mx+M*mu)  = 0;                    % We want the last input to be zero
 vub(N*mx+M*mu)  = 0;                    % We want the last input to be zero
+
+vub(N*(mx-1) + 1) = 0;
+vub(N*(mx-1) + 2) = 0;
+vub(N*(mx-1) + 3) = 0;
+vub(N*(mx-1) + 4) = 0;
+vub(N*(mx-1) + 5) = 0;
+vub(N*(mx-1) + 6) = 0;
+vlb(N*(mx-1) + 1) = 0;
+vlb(N*(mx-1) + 2) = 0;
+vlb(N*(mx-1) + 3) = 0;
+vlb(N*(mx-1) + 4) = 0;
+vlb(N*(mx-1) + 5) = 0;
+vlb(N*(mx-1) + 6) = 0;
 
 % Generate the matrix Q and the vector c (objecitve function weights in the QP problem) 
 Q2 = zeros(mx,mx);
@@ -71,7 +86,7 @@ Q2(3,3) = 0;                            % Weight on state x3
 Q2(4,4) = 0;                            % Weight on state x4
 Q2(5,5) = 0;
 Q2(6,6) = 0;
-P2 = diag([1, 1]);
+P2 = diag([2, 1]);
 Q = gen_q(Q2,P2,N,M);                                  % Generate Q, hint: gen_q
 c = zeros(size(Q, 1), 1);                                  % Generate c, this is the linear constant term in the QP
 
@@ -80,13 +95,15 @@ cost_function = @(x) 0.5 * x' * Q * x + c' * x;
 
 %% Generate system matrixes for linear model
 Aeq = gen_aeq(A2,B2,N,mx,mu);             % Generate A, hint: gen_aeq
-beq = [x0; zeros(size(Aeq, 1) - size(x0,1), 1)];             % Generate b
+beq = [x0; zeros(size(Aeq, 1) - mx, 1)];  % Generate b
 
 %% Solve QP problem with fmincon
 options = optimoptions('fmincon', 'MaxFunctionEvaluations', 50000);
+initialGuess = quadprog(Q, c, [], [], Aeq, beq, vlb, vub);
+%initialGuess = zeros(size(Aeq, 2), 1);
 tic
 %[z,lambda] = quadprog(Q, c, [], [], Aeq, beq, vlb, vub); % hint: quadprog. Type 'doc quadprog' for more info 
-z = fmincon(cost_function, ones(size(Aeq, 2), 1), [], [], Aeq, beq, vlb, vub, @(x) nonlin_constraints(x, N, mx), options);
+z = fmincon(cost_function, initialGuess, [], [], Aeq, beq, vlb, vub, @(x) nonlin_constraints(x, N, mx), options);
 t1=toc;
 
 % Calculate objective value
@@ -98,46 +115,62 @@ for i=1:N*mx+M*mu
 end
 
 %% Extract control inputs and states
-u = [z(N*mx+1:N*mx+M);z(N*mx+M)]; % Control input from solution
+%u = [z(N*mx+1:N*mx+M*mu);z(N*mx+M*mu)]; % Control input from solution
+u1 = [z(N*mx+1:mu:N*mx+M*mu); z(N*mx+M*mu)];
+u2 = [z(N*mx+2:mu:N*mx+M*mu); z(N*mx+M*mu)];
 
 x1 = [x0(1);z(1:mx:N*mx)];              % State x1 from solution
 x2 = [x0(2);z(2:mx:N*mx)];              % State x2 from solution
 x3 = [x0(3);z(3:mx:N*mx)];              % State x3 from solution
 x4 = [x0(4);z(4:mx:N*mx)];              % State x4 from solution
+x5 = [x0(5);z(5:mx:N*mx)];              % State x5 from solution
+x6 = [x0(6);z(6:mx:N*mx)];              % State x6 from solution
 
 num_variables = 5/delta_t;
 zero_padding = zeros(num_variables,1);
 unit_padding  = ones(num_variables,1);
 
-u   = [zero_padding; u; zero_padding];
+u1   = [zero_padding; u1; zero_padding];
+u2   = [zero_padding; u2; zero_padding];
 x1  = [x1_0*unit_padding; x1; zero_padding];
 x2  = [zero_padding; x2; zero_padding];
 x3  = [zero_padding; x3; zero_padding];
 x4  = [zero_padding; x4; zero_padding];
+x5  = [zero_padding; x5; zero_padding];
+x6  = [zero_padding; x6; zero_padding];
 
 %% Plotting
-simulation_time = delta_t*(length(u)-1);
+simulation_time = delta_t*(length(u1)-1);
 t = 0:delta_t:simulation_time;
 
 figure(2)
-subplot(511)
-stairs(t,u),grid
-ylabel('u')
-subplot(512)
+subplot(811)
+stairs(t,u1),grid
+ylabel('Pitch u')
+subplot(812)
+stairs(t,u2),grid
+ylabel('Elevation u')
+subplot(813)
 plot(t,x1,'m',t,x1,'mo'),grid
 ylabel('lambda')
-subplot(513)
+subplot(814)
 plot(t,x2,'m',t,x2','mo'),grid
 ylabel('r')
-subplot(514)
+subplot(815)
 plot(t,x3,'m',t,x3,'mo'),grid
 ylabel('p')
-subplot(515)
+subplot(816)
 plot(t,x4,'m',t,x4','mo'),grid
 xlabel('tid (s)'),ylabel('pdot')
+subplot(817)
+plot(t,x5,'m',t,x5','mo'),grid
+xlabel('tid (s)'),ylabel('e')
+subplot(818)
+plot(t,x6,'m',t,x6','mo'),grid
+xlabel('tid (s)'),ylabel('edot')
 
 fig = gcf;
-fig.Position = [500, 300, 1000, 700];
+fig.Position = [500, 000, 1000, 1100];
 
 % Nonlin Constraints
 function [c, ceq] = nonlin_constraints(x, N, mx)
